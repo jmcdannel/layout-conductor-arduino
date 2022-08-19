@@ -12,18 +12,66 @@
 #define SERVO_COUNT 16
 
 // {"action":"servo","payload":{"servo":0,"angle":60,"relay":{"relayPin":0,"state":true}}}
+// {"action":"servo","payload":{"servo":0,"value":60}}
+// [{"action":"servo","payload":{"servo":0,"value":60}}, {"action":"pin","payload":{"pin":43,"value":0}}]
+// [{"action":"pin","payload":{"pin":43,"value":0}}]
+// [{"action":"pin","payload":{"pin":47,"value":0}},{"action":"pin","payload":{"pin":49,"value":0}}]
+// [{"action":"pin","payload":{"pin":43,"value":0}},{"action":"pin","payload":{"pin":45,"value":0}},{"action":"pin","payload":{"pin":47,"value":0}},{"action":"pin","payload":{"pin":49,"value":0}}]
+// [{"action":"pin","payload":{"pin":43,"value":1}},{"action":"pin","payload":{"pin":45,"value":1}},{"action":"pin","payload":{"pin":47,"value":1}},{"action":"pin","payload":{"pin":49,"value":1}}]
 
-const size_t capacity = 2*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 60;
+
+const size_t capacity = 20*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 60;
 DynamicJsonDocument doc(capacity);
-Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+Adafruit_PWMServoDriver pwmTSS = Adafruit_PWMServoDriver();
+Adafruit_PWMServoDriver pwmCTY = Adafruit_PWMServoDriver();
+
+int outPins [] = {
+  22,
+  23,
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34,
+  35,
+  36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  44,
+  45,
+  46,
+  47,
+  48,
+  49,
+  50,
+  51,
+  52
+};
 
 void setup() {
   Serial.begin(115200);
   while (!Serial) continue;
   Serial.println("Setup");
-  pwm.begin();
-  pwm.setOscillatorFrequency(27000000);
-  pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+  pwmTSS.begin();
+  pwmCTY.begin();
+  pwmTSS.setOscillatorFrequency(27000000);
+  pwmCTY.setOscillatorFrequency(27000000);
+  pwmTSS.setPWMFreq(SERVO_FREQ);
+  pwmCTY.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+  for (int idx=0; idx<(sizeof(outPins) / sizeof(outPins[0])); idx++) {
+    pinMode(outPins[idx], OUTPUT);
+  }
 }
 
 void loop() {
@@ -37,27 +85,52 @@ void handleInput() {
   String input = Serial.readString();
   Serial.println(input);
   deserializeJson(doc, input);
+  JsonArray array = doc.as<JsonArray>();
+  for(JsonVariant v : array) {
+    handleAction(v);    
+  }  
+}
 
-  String action = doc["action"];
-  JsonObject payload = doc["payload"];
+void handleAction(JsonVariant v) {
+  String action = v["action"];
+  JsonObject payload = v["payload"];
 
   Serial.print("Action: ");
   Serial.println(action);
 
   if (action == "servo") {
-    Serial.println("action == servo");
-    command(payload);
+    handleServo(payload);
+  } else if (action == "pin") {
+    handlePin(payload);
   }
+  
 }
 
-void command(JsonObject payload) {
+void handleServo(JsonObject payload) {
   int angle = payload["value"];
   int servo = payload["servo"];
+  String pwm = payload["pwm"];
   Serial.print("angle: ");
   Serial.println(angle);
   Serial.print("servo: ");
   Serial.println(servo);
-  pwm.setPWM(servo, 0, getPulseWidth(angle));
+  Serial.print("pwm: ");
+  Serial.println(pwm);
+  if (pwm == "tss") {
+    pwmTSS.setPWM(servo, 0, getPulseWidth(angle));
+  } else if (pwm == "cty") {
+    pwmCTY.setPWM(servo, 0, getPulseWidth(angle));
+  }
+}
+
+void handlePin(JsonObject payload) {
+  int pin = payload["pin"];
+  int state = payload["value"];
+  Serial.print("pin: ");
+  Serial.println(pin);
+  Serial.print("state: ");
+  Serial.println(state);
+  digitalWrite(pin, state);
 }
 
 int getPulseWidth(int angle)
