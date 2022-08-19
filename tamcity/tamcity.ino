@@ -22,8 +22,8 @@
 
 const size_t capacity = 20*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 60;
 DynamicJsonDocument doc(capacity);
-Adafruit_PWMServoDriver pwmTSS = Adafruit_PWMServoDriver();
-Adafruit_PWMServoDriver pwmCTY = Adafruit_PWMServoDriver();
+Adafruit_PWMServoDriver pwmTSS = Adafruit_PWMServoDriver(0x40);
+Adafruit_PWMServoDriver pwmCTY = Adafruit_PWMServoDriver(0x41);
 
 int outPins [] = {
   22,
