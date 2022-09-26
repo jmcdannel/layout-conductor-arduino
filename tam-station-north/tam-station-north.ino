@@ -14,6 +14,7 @@
 // {"action":"servo","payload":{"servo":0,"angle":60,"relay":{"relayPin":0,"state":true}}}
 // {"action":"servo","payload":{"servo":0,"value":60}}
 // [{"action":"servo","payload":{"servo":0,"value":60}}, {"action":"pin","payload":{"pin":43,"value":0}}]
+// [{"action":"servo","payload":{"servo":15,"value":60, pwm: "tss"}}]
 // [{"action":"pin","payload":{"pin":43,"value":0}}]
 // [{"action":"pin","payload":{"pin":47,"value":0}},{"action":"pin","payload":{"pin":49,"value":0}}]
 // [{"action":"pin","payload":{"pin":43,"value":0}},{"action":"pin","payload":{"pin":45,"value":0}},{"action":"pin","payload":{"pin":47,"value":0}},{"action":"pin","payload":{"pin":49,"value":0}}]
@@ -22,7 +23,7 @@
 
 const size_t capacity = 20*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 60;
 DynamicJsonDocument doc(capacity);
-Adafruit_PWMServoDriver pwmTSS = Adafruit_PWMServoDriver(0x42);
+Adafruit_PWMServoDriver pwmTSS = Adafruit_PWMServoDriver(0x40);
 
 int outPins [] = {
   22,
@@ -106,13 +107,13 @@ void handleServo(JsonObject payload) {
   int angle = payload["value"];
   int servo = payload["servo"];
   String pwm = payload["pwm"];
-  Serial.print("angle: ");
-  Serial.println(angle);
-  Serial.print("servo: ");
-  Serial.println(servo);
-  Serial.print("pwm: ");
-  Serial.println(pwm);
   if (pwm == "tss") {
+    Serial.print("angle: ");
+    Serial.println(angle);
+    Serial.print("servo: ");
+    Serial.println(servo);
+    Serial.print("pwm: ");
+    Serial.println(pwm);
     pwmTSS.setPWM(servo, 0, getPulseWidth(angle));
   }
 }
