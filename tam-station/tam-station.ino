@@ -24,7 +24,6 @@ const size_t capacity = 20*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 60;
 DynamicJsonDocument doc(capacity);
 Adafruit_PWMServoDriver pwmTSN = Adafruit_PWMServoDriver(0x40);
 Adafruit_PWMServoDriver pwmCTY = Adafruit_PWMServoDriver(0x41);
-Adafruit_PWMServoDriver pwmTSS = Adafruit_PWMServoDriver(0x42);
 
 int outPins [] = {
   22,
@@ -64,13 +63,10 @@ void setup() {
   Serial.begin(115200);
   while (!Serial) continue;
   Serial.println("Setup");
-  pwmTSS.begin();
   pwmCTY.begin();
   pwmTSN.begin();
-  pwmTSS.setOscillatorFrequency(27000000);
   pwmCTY.setOscillatorFrequency(27000000);
   pwmTSN.setOscillatorFrequency(27000000);
-  pwmTSS.setPWMFreq(SERVO_FREQ);
   pwmCTY.setPWMFreq(SERVO_FREQ);
   pwmTSN.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
   for (int idx=0; idx<(sizeof(outPins) / sizeof(outPins[0])); idx++) {
@@ -120,9 +116,7 @@ void handleServo(JsonObject payload) {
   Serial.println(servo);
   Serial.print("pwm: ");
   Serial.println(pwm);
-  if (pwm == "tss") {
-    pwmTSS.setPWM(servo, 0, getPulseWidth(angle));
-  } else if (pwm == "cty") {
+  if (pwm == "cty") {
     pwmCTY.setPWM(servo, 0, getPulseWidth(angle));
   } else if (pwm == "tsn") {
     pwmTSN.setPWM(servo, 0, getPulseWidth(angle));

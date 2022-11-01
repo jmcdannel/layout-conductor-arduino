@@ -1,4 +1,4 @@
-// These are the possible states that are used to control how the arc welding flows
+  // These are the possible states that are used to control how the arc welding flows
 #define S_IDLE 1
 #define S_STRIKE_ARC 2
 #define S_WHITE_ARC 3
@@ -16,11 +16,11 @@ void setup()
 }
 void loop()
 {
-  static int ledPin_white_arc = 48; // White LED on pin 4
+  static int ledPin_white_arc = 5; // White LED on pin 4
   pinMode(ledPin_white_arc, OUTPUT);
-  static int ledPin_blue_arc = 50;  // Blue LED on pin 2
+  static int ledPin_blue_arc = 6;  // Blue LED on pin 2
   pinMode(ledPin_blue_arc, OUTPUT);
-  static int ledPin_red_glow = 46;  // Red LED on pin 3
+  static int ledPin_red_glow = 4;  // Red LED on pin 3
   pinMode(ledPin_red_glow, OUTPUT);
 
   switch (state_main_control)// Main control state manages the arc welding cycle
