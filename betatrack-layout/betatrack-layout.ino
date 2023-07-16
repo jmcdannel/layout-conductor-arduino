@@ -1,5 +1,19 @@
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
 #include <ArduinoJson.h>
 #include <TurnoutPulser.h>
+
+
+#define SERVOMIN  150 // This is the 'minimum' pulse length count (out of 4096)
+#define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
+#define MIN_PULSE_WIDTH 650
+#define MAX_PULSE_WIDTH 2350
+#define USMIN  600 // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
+#define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
+#define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
+#define SERVO_COUNT 16
+
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 int outPins [] = { 2, 3, 4, 5 };
 
@@ -30,10 +44,14 @@ void setup() {
     turnouts[idx].begin();
   }
 
+  pwm.begin();
+  pwm.setOscillatorFrequency(27000000);
+  pwm.setPWMFreq(SERVO_FREQ);
+//  pwm.setPWMFreq(1200);  // This is the maximum PWM frequency
 }
 
 void loop() {
-
+  
   for (int idx=0; idx<(sizeof(turnouts) / sizeof(turnouts[0])); idx++) {
     turnouts[idx].loop();
   }
@@ -41,6 +59,15 @@ void loop() {
     Serial.println("handleInput");
     handleInput();
   }
+  
+//  for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+//    pwm.setPWM(2, 0, pulselen);
+//    Serial.println(pulselen);
+//  }
+//  pwm.setPWM(2, 0, 150);
+//  delay(500);
+//  pwm.setPWM(2, 0, 600);
+//  delay(500);
 }
 
 void handleInput() {
@@ -62,6 +89,8 @@ void handleAction(JsonVariant v) {
 
   if (action == "pin") {
     handlePin(payload);
+  } else  if (action == "servo") {
+    handleServo(payload);
   } else if (action == "turnout") {
     handleTurnout(payload);
   }
@@ -80,10 +109,35 @@ void handleTurnout(JsonObject payload) {
 
 void handlePin(JsonObject payload) {
   int pin = payload["pin"];
-  int state = payload["value"];
+  bool state = payload["state"];
   Serial.print("pin: ");
   Serial.println(pin);
   Serial.print("state: ");
   Serial.println(state);
   digitalWrite(pin, state);
+}
+
+void handleServo(JsonObject payload) {
+  int angle = payload["value"];
+  int servo = payload["servo"];
+  int current = payload["current"];
+  int pulseTarget = getPulseWidth(angle);
+  int pulseOrigin = getPulseWidth(current);
+  if (pulseTarget < pulseOrigin) {
+    for (uint16_t pulselen = pulseOrigin; pulselen > pulseTarget; pulselen--) {
+      pwm.setPWM(servo, 0, pulselen);
+    }
+  } else {
+    for (uint16_t pulselen = pulseOrigin; pulselen < pulseTarget; pulselen++) {
+      pwm.setPWM(servo, 0, pulselen);
+    }
+  }
+}
+
+int getPulseWidth(int angle) {
+  int pulse_wide, analog_value;
+  pulse_wide   = map(angle, 0, 180, MIN_PULSE_WIDTH, MAX_PULSE_WIDTH);
+  analog_value = int(float(pulse_wide) / 1000000 * SERVO_FREQ * 4096);
+  Serial.println(analog_value);
+  return analog_value;
 }
